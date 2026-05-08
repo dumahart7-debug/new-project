@@ -1,0 +1,188 @@
+{
+  "status": "ok",
+  "panel_title": "Prepared prediction models",
+  "order": [
+    "iris",
+    "penguins",
+    "titanic"
+  ],
+  "datasets": {
+    "iris": {
+      "label": "Iris flowers",
+      "dataset_key": "iris",
+      "sample_key": "irisDemo",
+      "model_name": "Nearest neighbor",
+      "available_models": [
+        "Decision tree",
+        "Random forest",
+        "Nearest neighbor"
+      ],
+      "model_reports": {
+        "decision_tree": {
+          "label": "Decision tree",
+          "metric_label": "Test accuracy",
+          "metric_value": 0.921,
+          "metric_display": "92.1%",
+          "why_choose": "It makes step-by-step rules that are beginner-friendly to inspect.",
+          "metric_hint": "A simple baseline that is easy to explain."
+        },
+        "random_forest": {
+          "label": "Random forest",
+          "metric_label": "Test accuracy",
+          "metric_value": 0.921,
+          "metric_display": "92.1%",
+          "why_choose": "It reduces the noise of a single tree by combining many small trees.",
+          "metric_hint": "Often stronger because it averages many trees."
+        },
+        "nearest_neighbor": {
+          "label": "Nearest neighbor",
+          "metric_label": "Test accuracy",
+          "metric_value": 0.947,
+          "metric_display": "94.7%",
+          "why_choose": "It predicts by looking at the most similar training examples.",
+          "metric_hint": "Useful when similar records tend to share the same label."
+        }
+      },
+      "default_model": "nearest_neighbor",
+      "target": "species",
+      "features": [
+        "sepal_length",
+        "sepal_width",
+        "petal_length",
+        "petal_width"
+      ],
+      "train_rows": 112,
+      "test_rows": 38,
+      "metric_label": "Test accuracy",
+      "metric_value": 0.947,
+      "metric_display": "94.7%",
+      "why_chosen": "Iris is compact, well balanced, and ideal for a clear species-classification example.",
+      "result_summary": "The iris flowers nearest neighbor predicts species with 94.7% accuracy on held-out data.",
+      "limitations": [
+        "These are small prepared teaching models, not production systems.",
+        "Different models can disagree, especially near class boundaries.",
+        "Confidence should be read as model confidence, not ground truth."
+      ]
+    },
+    "penguins": {
+      "label": "Penguin species",
+      "dataset_key": "penguins",
+      "sample_key": "penguins",
+      "model_name": "Decision tree",
+      "available_models": [
+        "Decision tree",
+        "Random forest",
+        "Nearest neighbor"
+      ],
+      "model_reports": {
+        "decision_tree": {
+          "label": "Decision tree",
+          "metric_label": "Test accuracy",
+          "metric_value": 1.0,
+          "metric_display": "100.0%",
+          "why_choose": "It makes step-by-step rules that are beginner-friendly to inspect.",
+          "metric_hint": "A simple baseline that is easy to explain."
+        },
+        "random_forest": {
+          "label": "Random forest",
+          "metric_label": "Test accuracy",
+          "metric_value": 0.988,
+          "metric_display": "98.8%",
+          "why_choose": "It reduces the noise of a single tree by combining many small trees.",
+          "metric_hint": "Often stronger because it averages many trees."
+        },
+        "nearest_neighbor": {
+          "label": "Nearest neighbor",
+          "metric_label": "Test accuracy",
+          "metric_value": 0.779,
+          "metric_display": "77.9%",
+          "why_choose": "It predicts by looking at the most similar training examples.",
+          "metric_hint": "Useful when similar records tend to share the same label."
+        }
+      },
+      "default_model": "decision_tree",
+      "target": "species",
+      "features": [
+        "bill_length_mm",
+        "bill_depth_mm",
+        "flipper_length_mm",
+        "body_mass_g",
+        "sex",
+        "island"
+      ],
+      "train_rows": 258,
+      "test_rows": 86,
+      "metric_label": "Test accuracy",
+      "metric_value": 1.0,
+      "metric_display": "100.0%",
+      "why_chosen": "Penguins add a biological dataset with both body measurements and habitat clues.",
+      "result_summary": "The penguin species decision tree predicts species with 100.0% accuracy on held-out data.",
+      "limitations": [
+        "These are small prepared teaching models, not production systems.",
+        "Different models can disagree, especially near class boundaries.",
+        "Confidence should be read as model confidence, not ground truth."
+      ]
+    },
+    "titanic": {
+      "label": "Titanic passengers",
+      "dataset_key": "titanic",
+      "sample_key": "titanic",
+      "model_name": "Decision tree",
+      "available_models": [
+        "Decision tree",
+        "Random forest",
+        "Nearest neighbor"
+      ],
+      "model_reports": {
+        "decision_tree": {
+          "label": "Decision tree",
+          "metric_label": "Test accuracy",
+          "metric_value": 0.776,
+          "metric_display": "77.6%",
+          "why_choose": "It makes step-by-step rules that are beginner-friendly to inspect.",
+          "metric_hint": "A simple baseline that is easy to explain."
+        },
+        "random_forest": {
+          "label": "Random forest",
+          "metric_label": "Test accuracy",
+          "metric_value": 0.753,
+          "metric_display": "75.3%",
+          "why_choose": "It reduces the noise of a single tree by combining many small trees.",
+          "metric_hint": "Often stronger because it averages many trees."
+        },
+        "nearest_neighbor": {
+          "label": "Nearest neighbor",
+          "metric_label": "Test accuracy",
+          "metric_value": 0.646,
+          "metric_display": "64.6%",
+          "why_choose": "It predicts by looking at the most similar training examples.",
+          "metric_hint": "Useful when similar records tend to share the same label."
+        }
+      },
+      "default_model": "decision_tree",
+      "target": "survival outcome",
+      "features": [
+        "age",
+        "fare",
+        "pclass",
+        "sibsp",
+        "parch",
+        "sex",
+        "embarked",
+        "alone"
+      ],
+      "train_rows": 668,
+      "test_rows": 223,
+      "metric_label": "Test accuracy",
+      "metric_value": 0.776,
+      "metric_display": "77.6%",
+      "why_chosen": "Titanic adds a classic mixed-feature classification problem with a very different domain.",
+      "result_summary": "The titanic passengers decision tree predicts survival outcome with 77.6% accuracy on held-out data.",
+      "limitations": [
+        "These are small prepared teaching models, not production systems.",
+        "Different models can disagree, especially near class boundaries.",
+        "Confidence should be read as model confidence, not ground truth."
+      ]
+    }
+  }
+}

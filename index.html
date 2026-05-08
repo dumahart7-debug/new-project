@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dataset Visualizer and Prediction Lab</title>
+    <meta
+      name="description"
+      content="An interactive dataset visualizer with spreadsheet upload, automatic statistics, rich charts, and browser-based prediction training."
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="xlsx.full.min.js"></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <main class="workspace">
+      <section class="hero" aria-labelledby="page-title">
+        <div class="hero-copy">
+          <p class="eyebrow">Dataset discovery tool</p>
+          <h1 id="page-title">Visualize data and test predictions.</h1>
+          <p>
+            Upload a spreadsheet, inspect its structure, chart the patterns, train a prediction model, and test new inputs in the same web app.
+          </p>
+          <p class="hero-note">Upload any CSV or Excel dataset to generate statistics and visualizations automatically.</p>
+          <div class="hero-penguin-accent" aria-hidden="true">
+            <svg viewBox="0 0 180 96" role="img">
+              <path class="hero-penguin-head" d="M18 59 C22 24, 58 10, 94 20 C116 18, 142 24, 164 39 C142 50, 124 56, 102 57 C89 70, 69 82, 40 82 C27 78, 21 70, 19 62 C15 61, 16 60, 18 59 Z" />
+              <path class="hero-penguin-beak" d="M92 28 C112 23, 139 26, 164 39 C138 46, 116 50, 98 48 Z" />
+              <circle class="hero-penguin-eye" cx="70" cy="39" r="6" />
+              <circle class="hero-penguin-eye-dot" cx="72.5" cy="37.5" r="2" />
+            </svg>
+          </div>
+          <button class="easter-egg-button" id="surprisePalette" type="button" aria-label="Surprise palette" title="Surprise"></button>
+        </div>
+        <div class="import-panel" aria-label="Dataset import">
+          <label class="upload-zone" for="fileInput">
+            <span class="upload-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="img">
+                <path d="M12 3v11m0-11 4 4m-4-4-4 4" />
+                <path d="M5 14v4a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3v-4" />
+              </svg>
+            </span>
+            <strong>Load a spreadsheet</strong>
+            <span>Upload any CSV or Excel dataset to generate statistics and visualizations automatically.</span>
+          </label>
+          <input id="fileInput" type="file" accept=".csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" />
+          <div class="sample-actions" id="sampleButtons"></div>
+        </div>
+      </section>
+
+      <section class="howto-panel" aria-labelledby="howToTitle">
+        <div class="summary-heading">
+          <div>
+            <p class="eyebrow">Quick start</p>
+            <h2 id="howToTitle">How to use this app</h2>
+          </div>
+        </div>
+        <div class="howto-grid">
+          <article class="howto-step">
+            <span>1</span>
+            <div>
+              <h3>Upload or load a dataset</h3>
+              <p>Bring in a CSV or Excel file and let the app profile the columns automatically.</p>
+            </div>
+          </article>
+          <article class="howto-step">
+            <span>2</span>
+            <div>
+              <h3>Review the summary and statistics</h3>
+              <p>Check row counts, missing values, detected data types, and numeric summaries before charting.</p>
+            </div>
+          </article>
+          <article class="howto-step">
+            <span>3</span>
+            <div>
+              <h3>Choose fields to visualize or train a prediction model</h3>
+              <p>Map chart axes, ask a plain-English question, or train a model from the same dataset.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="status-strip" aria-label="Dataset summary">
+        <article>
+          <span id="rowCount">0</span>
+          <p>rows</p>
+        </article>
+        <article>
+          <span id="columnCount">0</span>
+          <p>columns</p>
+        </article>
+        <article>
+          <span id="numericCount">0</span>
+          <p>numeric fields</p>
+        </article>
+        <article>
+          <span id="visibleCount">0</span>
+          <p>visible rows</p>
+        </article>
+      </section>
+
+      <section class="summary-panel" aria-labelledby="summaryTitle">
+        <div class="summary-heading">
+          <div>
+            <p class="eyebrow">Data quality</p>
+            <h2 id="summaryTitle">Dataset summary</h2>
+          </div>
+          <p id="summaryStatus">Load a spreadsheet to inspect its structure.</p>
+        </div>
+        <div class="summary-grid" id="datasetSummary"></div>
+      </section>
+
+      <section class="ml-panel" aria-labelledby="mlTitle">
+        <div class="summary-heading">
+          <div>
+            <p class="eyebrow">Machine learning</p>
+            <h2 id="mlTitle">Training summary</h2>
+          </div>
+          <p id="mlStatus">Loading model report...</p>
+        </div>
+        <div class="ml-grid" id="mlReport"></div>
+      </section>
+
+      <section class="prediction-panel" aria-labelledby="predictionTitle">
+        <div class="summary-heading">
+          <div>
+            <p class="eyebrow">Prediction lab</p>
+            <h2 id="predictionTitle">Train and predict</h2>
+          </div>
+          <p id="predictionStatus">Loading prediction workflow...</p>
+        </div>
+        <div class="prediction-intro">
+          <p>Choose a target column, train a browser-side model, and test new inputs without leaving the page.</p>
+          <p>The visualizer and the prediction workflow now run from the same uploaded dataset.</p>
+        </div>
+        <div class="prediction-grid">
+          <form class="prediction-form" id="predictionForm"></form>
+          <div class="prediction-result" id="predictionResult"></div>
+        </div>
+        <div class="prediction-visualization" id="predictionViz"></div>
+      </section>
+
+      <section class="control-panel" aria-label="Visualization controls">
+        <div class="control-card">
+          <div class="card-heading">
+            <p class="eyebrow">Chart</p>
+            <h2>Map fields</h2>
+          </div>
+          <div class="segmented" id="chartTypeButtons" aria-label="Chart type"></div>
+          <div class="field-grid">
+            <label>
+              <span>X axis</span>
+              <select id="xSelect"></select>
+            </label>
+            <label>
+              <span>Y axis</span>
+              <select id="ySelect"></select>
+            </label>
+            <label>
+              <span>Group</span>
+              <select id="groupSelect"></select>
+            </label>
+          </div>
+          <div class="recommendation-box" id="chartRecommendation" aria-live="polite">
+            <strong>Recommended chart</strong>
+            <p>Load a spreadsheet and choose columns to see a chart suggestion.</p>
+          </div>
+        </div>
+
+        <div class="control-card">
+          <div class="card-heading">
+            <p class="eyebrow">Rows</p>
+            <h2>Filter data</h2>
+          </div>
+          <div class="field-grid">
+            <label>
+              <span>Column</span>
+              <select id="filterColumnSelect"></select>
+            </label>
+            <label>
+              <span>Value</span>
+              <select id="filterValueSelect"></select>
+            </label>
+          </div>
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m21 21-4.4-4.4" />
+              <circle cx="11" cy="11" r="7" />
+            </svg>
+            <input id="searchInput" type="search" placeholder="Search rows" />
+          </div>
+        </div>
+
+        <div class="control-card query-card">
+          <div class="card-heading">
+            <p class="eyebrow">Ask</p>
+            <h2>Plain English</h2>
+          </div>
+          <form class="query-form" id="queryForm">
+            <label>
+              <span>Analysis request</span>
+              <input id="queryInput" type="text" placeholder="show the distribution of a numeric column" />
+            </label>
+            <button type="submit">Run request</button>
+          </form>
+          <div class="query-response" id="queryResponse" aria-live="polite">
+            Try asking about a numeric column from your sheet, such as "show the distribution of revenue" or "compare sales by region".
+          </div>
+        </div>
+
+      </section>
+
+      <section class="visual-area">
+        <article class="chart-stage" aria-labelledby="chartTitle">
+          <div class="chart-heading">
+            <div>
+              <p class="eyebrow" id="datasetLabel">No dataset loaded</p>
+              <h2 id="chartTitle">Load a dataset to begin</h2>
+            </div>
+            <p id="chartSubtitle"></p>
+          </div>
+          <div class="chart-frame" id="chartFrame"></div>
+          <div class="chart-insights" id="chartInsights" aria-live="polite"></div>
+        </article>
+
+        <aside class="inspector" aria-label="Dataset inspector">
+          <div>
+            <p class="eyebrow">Column profile</p>
+            <h2 id="profileTitle">Fields</h2>
+          </div>
+          <div class="column-list" id="columnProfile"></div>
+        </aside>
+      </section>
+
+      <section class="table-section" aria-labelledby="tableTitle">
+        <div class="table-heading">
+          <div>
+            <p class="eyebrow">Records</p>
+            <h2 id="tableTitle">Data preview</h2>
+          </div>
+          <p id="tableCount"></p>
+        </div>
+        <div class="table-wrap" id="tableWrap"></div>
+      </section>
+
+      <p class="load-error" id="loadError" role="alert"></p>
+    </main>
+  </body>
+</html>

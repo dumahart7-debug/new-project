@@ -1,0 +1,68 @@
+[
+  {
+    "id": "summary_iris",
+    "type": "summary",
+    "description": "Dataset summary reports the expected Iris shape and missing values.",
+    "dataset": "data/iris_demo.csv",
+    "expected": {
+      "rows": 150,
+      "columns": 5,
+      "missing": {
+        "petal_length": 0,
+        "species": 0
+      },
+      "numeric_columns_include": ["petal_length", "sepal_width"],
+      "categorical_columns_include": ["species"]
+    }
+  },
+  {
+    "id": "visualization_distribution",
+    "type": "query",
+    "description": "A distribution request for one numeric column should use a histogram.",
+    "dataset": "data/penguins.csv",
+    "request": "show the distribution of body mass g",
+    "expected": {
+      "supported": true,
+      "chart": "histogram",
+      "xColumn": "body_mass_g"
+    }
+  },
+  {
+    "id": "comparison_numeric_by_category",
+    "type": "query",
+    "description": "A comparison request with one numeric and one categorical column should use a box plot.",
+    "dataset": "data/titanic.csv",
+    "request": "compare age by class",
+    "expected": {
+      "supported": true,
+      "chart": "box",
+      "xColumn": "class",
+      "yColumn": "age"
+    }
+  },
+  {
+    "id": "highest_group_question",
+    "type": "query",
+    "description": "A highest-group request should calculate the strongest grouped average from the loaded dataset.",
+    "dataset": "data/penguins.csv",
+    "request": "which species is heaviest?",
+    "expected": {
+      "supported": true,
+      "chart": "bar",
+      "xColumn": "species",
+      "yColumn": "body_mass_g",
+      "answerContains": "Gentoo"
+    }
+  },
+  {
+    "id": "unsupported_request",
+    "type": "query",
+    "description": "Unsupported requests should be refused with examples.",
+    "dataset": "data/iris_demo.csv",
+    "request": "make a violin chart and explain causality",
+    "expected": {
+      "supported": false,
+      "messageContains": "show the distribution"
+    }
+  }
+]
