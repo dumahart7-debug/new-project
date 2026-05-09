@@ -3028,6 +3028,7 @@ function init() {
 function createEmptyModelTrainingState() {
   return {
     targetColumn: "",
+    selectedFeatureColumns: [],
     modelType: "decision_tree",
     testRatio: 0.25,
     trainedModel: null,
@@ -3125,7 +3126,7 @@ function bindEvents() {
       return;
     }
 
-    const resetButton = event.target.closest("button[data-reset-prediction-inputs]");
+    const resetButton = event.target.closest("button[data-reset-prediction-inputs], button[data-reset-flower]");
     if (resetButton) {
       event.preventDefault();
       resetPreparedInputs();
@@ -3161,6 +3162,7 @@ function handlePredictionFormChange(event) {
   const targetChoice = event.target.closest("select[data-target-column]");
   if (targetChoice) {
     state.modelTraining.targetColumn = targetChoice.value;
+    syncSelectedFeatureColumns(true);
     state.modelTraining.trainedModel = null;
     state.modelTraining.inputValues = {};
     renderPredictionWorkflow();
@@ -3182,6 +3184,16 @@ function handlePredictionFormChange(event) {
   if (splitChoice) {
     state.modelTraining.testRatio = Number(splitChoice.value);
     state.modelTraining.trainedModel = null;
+    renderPredictionWorkflow();
+    renderMachineLearningReport();
+    return;
+  }
+
+  const featureToggle = event.target.closest("input[data-feature-toggle]");
+  if (featureToggle) {
+    updateSelectedFeatureColumns(featureToggle);
+    state.modelTraining.trainedModel = null;
+    state.modelTraining.inputValues = {};
     renderPredictionWorkflow();
     renderMachineLearningReport();
     return;
@@ -3284,9 +3296,11 @@ function renderPredictionWorkflow() {
     trainingState.targetColumn = targetOptions[0];
     trainingState.trainedModel = null;
   }
+  syncSelectedFeatureColumns();
 
   const trainedModel = trainingState.trainedModel;
-  const featurePreview = getFeatureCandidates(trainingState.targetColumn);
+  const availableFeatureColumns = getAvailableFeatureCandidates(trainingState.targetColumn);
+  const selectedFeatureColumns = getSelectedFeatureCandidates(trainingState.targetColumn);
 
   elements.predictionStatus.textContent = trainedModel
     ? `Model trained on ${state.name}: ${trainedModel.modelLabel}`
@@ -3333,7 +3347,26 @@ function renderPredictionWorkflow() {
       </select>
       <p class="prediction-model-note">A held-out test split gives a simple accuracy estimate on data the model did not train on.</p>
     </label>
-    <div class="summary-tags">${featurePreview.map((feature) => `<span class="summary-tag">${escapeHtml(feature)}</span>`).join("")}</div>
+    <div class="prepared-select-card prepared-model-card">
+      <div class="iris-slider-copy">
+        <span>Predictor columns</span>
+        <strong>${selectedFeatureColumns.length} selected</strong>
+      </div>
+      <div class="feature-picker-grid">
+        ${availableFeatureColumns
+          .map(
+            (feature) => `
+              <label class="feature-toggle">
+                <input type="checkbox" data-feature-toggle="${escapeHtml(feature)}"${selectedFeatureColumns.includes(feature) ? " checked" : ""} />
+                <span>${escapeHtml(feature)}</span>
+              </label>
+            `,
+          )
+          .join("")}
+      </div>
+      <p class="prediction-model-note">Choose which columns the model can learn from. This lets people test how the prediction changes when different inputs are included.</p>
+    </div>
+    <div class="summary-tags">${selectedFeatureColumns.map((feature) => `<span class="summary-tag">${escapeHtml(feature)}</span>`).join("")}</div>
     <div class="prediction-form-actions">
       <button type="button" data-train-model="true">Train model</button>
     </div>
@@ -3343,7 +3376,7 @@ function renderPredictionWorkflow() {
   if (!trainedModel) {
     elements.predictionResult.innerHTML = `
       <h3>Train to start predicting</h3>
-      <p>The app will use <strong>${escapeHtml(featurePreview.length.toString())}</strong> feature${featurePreview.length === 1 ? "" : "s"} from the current dataset and report test accuracy after training.</p>
+      <p>The app will use <strong>${escapeHtml(selectedFeatureColumns.length.toString())}</strong> selected predictor${selectedFeatureColumns.length === 1 ? "" : "s"} from the current dataset and report test accuracy after training.</p>
     `;
     elements.predictionViz.innerHTML = emptyState("No prediction yet", "Train a model to see probabilities, explanations, and nearby examples.");
     return;
@@ -3361,7 +3394,14 @@ function renderDynamicPredictionInputs(trainedModel) {
     ${trainedModel.featureNames.map((feature) => renderPreparedControl(trainedModel, feature)).join("")}
     <div class="prediction-form-actions">
       <button type="button" data-save-prediction="true">Save prediction</button>
-      <button type="button" class="prediction-secondary-button" data-reset-prediction-inputs="true">Reset prediction inputs</button>
+      <button
+        type="button"
+        class="prediction-secondary-button"
+        data-reset-prediction-inputs="true"
+        data-reset-flower="true"
+      >
+        Reset prediction inputs
+      </button>
     </div>
   `;
 }
@@ -3445,8 +3485,36 @@ function syncPreparedFeatureValue(control) {
 }
 
 function resetPreparedInputs() {
+  const trainedModel = state.modelTraining?.trainedModel;
   initializePreparedState();
-  renderPredictionWorkflow();
+
+  if (!trainedModel) {
+    renderPredictionWorkflow();
+    return;
+  }
+
+  syncPredictionInputsFromState(trainedModel);
+  updatePredictionLab();
+}
+
+// Keep the live form controls in sync with the reset/default values without
+// depending on a full rerender of the prediction workflow.
+function syncPredictionInputsFromState(trainedModel) {
+  trainedModel.featureNames.forEach((feature) => {
+    const schema = trainedModel.schema[feature];
+    const selectorValue = window.CSS?.escape ? CSS.escape(feature) : feature.replace(/"/g, '\\"');
+    const control = elements.predictionForm.querySelector(`[data-model-feature="${selectorValue}"]`);
+    if (!control || !schema) return;
+
+    const value = state.modelTraining.inputValues[feature];
+    if (control.tagName === "SELECT") {
+      control.value = String(value);
+    } else if (control.type === "range") {
+      control.value = Number(value);
+    }
+
+    syncPreparedFeatureValue(control);
+  });
 }
 
 function updatePredictionLab() {
@@ -3500,8 +3568,8 @@ function trainModelFromCurrentDataset() {
   const targetColumn = state.modelTraining.targetColumn;
   if (!targetColumn) throw new Error("Choose a target column before training.");
 
-  const featureNames = getFeatureCandidates(targetColumn);
-  if (!featureNames.length) throw new Error("This dataset does not have enough useful feature columns to train from.");
+  const featureNames = getSelectedFeatureCandidates(targetColumn);
+  if (!featureNames.length) throw new Error("Choose at least one predictor column before training.");
 
   const dataset = buildTrainingDataset(targetColumn, featureNames);
   if (dataset.classes.length < 2) throw new Error("The selected target needs at least two classes.");
@@ -3562,7 +3630,7 @@ function getPredictionTargetCandidates() {
   return [preferredTarget, ...candidates.filter((column) => column !== preferredTarget)];
 }
 
-function getFeatureCandidates(targetColumn) {
+function getAvailableFeatureCandidates(targetColumn) {
   return state.profile
     .filter((column) => column.name !== targetColumn)
     .filter((column) => {
@@ -3571,6 +3639,37 @@ function getFeatureCandidates(targetColumn) {
     })
     .filter((column) => column.type === "number" || distinctCategoryCount(column.name) <= 18)
     .map((column) => column.name);
+}
+
+function getSelectedFeatureCandidates(targetColumn) {
+  const available = getAvailableFeatureCandidates(targetColumn);
+  const selected = state.modelTraining.selectedFeatureColumns.filter((feature) => available.includes(feature));
+  return selected.length ? selected : available;
+}
+
+function syncSelectedFeatureColumns(resetSelection) {
+  const available = getAvailableFeatureCandidates(state.modelTraining.targetColumn);
+  if (resetSelection || !state.modelTraining.selectedFeatureColumns.length) {
+    state.modelTraining.selectedFeatureColumns = [...available];
+    return;
+  }
+
+  const nextSelection = state.modelTraining.selectedFeatureColumns.filter((feature) => available.includes(feature));
+  state.modelTraining.selectedFeatureColumns = nextSelection.length ? nextSelection : [...available];
+}
+
+function updateSelectedFeatureColumns(control) {
+  const feature = control.dataset.featureToggle;
+  if (!feature) return;
+  const current = new Set(state.modelTraining.selectedFeatureColumns);
+  if (control.checked) {
+    current.add(feature);
+  } else if (current.size > 1) {
+    current.delete(feature);
+  } else {
+    control.checked = true;
+  }
+  state.modelTraining.selectedFeatureColumns = [...current];
 }
 
 function distinctCategoryCount(columnName) {
@@ -4179,6 +4278,7 @@ function loadRows(name, parsed, sampleKey, modelKey) {
     ...createEmptyModelTrainingState(),
     targetColumn: getPreferredTargetColumn(targetCandidates) || targetCandidates[0] || "",
   };
+  syncSelectedFeatureColumns(true);
   elements.searchInput.value = "";
 
   chooseDefaults(true);
